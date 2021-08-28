@@ -13,5 +13,6 @@
     "node-emoji": "^1.11.0",
     "querystring": "^0.2.1",
     "vmsq": "^2.1.0"
-  }
+  },
+  "main": "index.js"
 }
