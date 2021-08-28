@@ -14,6 +14,7 @@ client.once('ready', () => {
 	com.reload_threads();
     com.reload_slash();
 	console.log('Ready!');
+    client.user.setActivity('with Node.js.');
 });
 
 client.on('messageCreate', async (msg) => {
@@ -24,18 +25,12 @@ client.on('messageCreate', async (msg) => {
     }
 });
 
+client.on('guildMemberAdd', async member => {
+});
+
 client.on('interactionCreate', async interaction => {
 	if (interaction.isCommand()) {
-        const command = com.slash[interaction.commandName];
-
-        if (!command) return;
-    
-        try {
-            await command.execute(interaction);
-        } catch (error) {
-            console.error(error);
-            await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-        }
+        await com.process_slash(client, cfg, interaction);
     }
 
 

@@ -46,15 +46,36 @@ class ExtManager {
     
         }
     };
+
+    async process_slash(client, cfg, interaction){
+        const command = this.slash[interaction.commandName];
+
+        if (!command) return;
     
+        try {
+            //await command.execute(interaction);
+            var ctx = new Ctx(this, client, cfg, interaction);
+            try {
+                //this.execute(ctx, interaction);
+                await command.execute(ctx, interaction);
+            }catch(err){
+                interaction.channel.send(common.wrap(err));
+            }
+        } catch (error) {
+            console.error(error);
+            await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+        }
+
+    };
+
     reload_slash(target){
         if (target != undefined) {
             nocache(`./slash/${target}`);
             const command = require(`./slash/${target}`);
             for (const c of Object.keys(command)){
                 this.slash[c] = command[c];
-                console.log(this.slash);
             }
+            if(command.onLoad != undefined) command.onLoad(this);
         } else {
             const commandFiles = fs.readdirSync('./slash').filter(file => file.endsWith('.js'));
 
@@ -63,12 +84,12 @@ class ExtManager {
                 const command = require(`./slash/${file}`);
                 for (const c of Object.keys(command)){
                     this.slash[c] = command[c];
-                    console.log(this.slash);
                 }
+                if(command.onLoad != undefined) command.onLoad(this);
             }
         }
     }
-
+    // TODO Seperate reload in to loading and unloading
     reload_ext(target){
         if (target != undefined){
             nocache(`./ext/${target}`);
@@ -78,6 +99,8 @@ class ExtManager {
                 this.addCommand(c, command[c]);
                 count += 1;
             }
+
+            if(command.onLoad != undefined) command.onLoad(this);
             return count;
             
         }else{
@@ -92,7 +115,9 @@ class ExtManager {
                 for (const c of Object.keys(command)){
                     this.addCommand(c, command[c]);
                 }
+                if(command.onLoad != undefined) command.onLoad(this);
             }
+            
             return commandFiles;
         }
     };
@@ -191,19 +216,21 @@ class ExtManager {
 
 class Ctx {
     constructor(cman,client,cfg,message) {
-        this.message=message;
-        this.client=client;
-        this.channel=message.channel;
-        this.guild=message.guild;
-        this.member=message.member;
-        this.author=message.author;
+        this.message = message;
+        this.client = client;
+        this.channel = message.channel;
+        this.guild = message.guild;
+        this.member = message.member;
+        this.author = message.author;
         this.cfg=cfg;
         this.commands=cman;
         this.ext=cman;
+        if(this.message.content != undefined){
+            this.args=this.message.content.split(" ");
+            this.args.shift();
+            this.argsRaw=this.args.join(" ");
+        }
 
-        this.args=this.message.content.split(" ");
-        this.args.shift();
-        this.argsRaw=this.args.join(" ");
     }
     async invoke(command) {
         await this.commands.run(command,this);
@@ -320,14 +347,23 @@ class Ctx {
     return undefined;
     }
     getUser(name) {
-    for(const user of this.client.users.cache) {
-    const u=user[1];
-    if(u.username==name||u.id==name) {
-    return u;
-    }
-    }
-    return undefined;
+        for(const user of this.client.users.cache) {
+            const u=user[1];
+            if(u.username==name||u.id==name) {
+                return u;
+            }
+        }
+        return undefined;
     }   
+    memberHasRole(member, check_role){
+        return member.roles.cache.some(role => role.id === check_role.id)
+    }
+    memberHasRoleID(member, check_role){
+        return member.roles.cache.some(role => role.id === check_role)
+    }
+    memberHasRoleNamed(member, check_role){
+        return member.roles.cache.some(role => role.name === check_role)
+    }
 }
 
 

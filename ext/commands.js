@@ -13,6 +13,20 @@ const checks = require('../checks.js');
 const nc = require('../netcrawler.js');
 const querystring = require('querystring');
 
+exports.onLoad = function(ext) {
+	console.log("Ext loaded.");
+	ext.client.on('guildMemberAdd', async member => {
+		const em = new discord.MessageEmbed();
+
+		em.addField(`${member.displayName} (${member.id})`,`Joined at ${member.joinedAt.toDateString()}
+		Registered ${member.user.createdAt.toDateString()}
+		Flags: ${member.user.flags.toArray()}
+		${member.toString()}`);
+		em.setThumbnail(member.user.displayAvatarURL());
+		let chan = member.guild.channels.cache.some(c => c.id === "421285829818974209")
+		await chan.send(em);
+	});
+}
 exports.replytest = {
 	help: "Test",
 	aliases: ['reply'],
@@ -272,6 +286,24 @@ exports.reload = {
 		}else{
 			const out = ctx.commands.reload_ext(args[0]);
 			ctx.channel.send(`Extension ${args[0]} reloaded (${out}).`);
+		}
+	}
+};
+
+exports.sreload = {
+	help: "Reloads slash commands",
+	group: "admin",
+	flags: ['$owner'],
+	usage: "[optional: module]",
+	execute: async function(ctx) {
+		let args = ctx.args;
+		if (!checks.isOwner(ctx)){return;}
+		if (args.length == 0){
+			const out = ctx.commands.reload_slash();
+			ctx.channel.send(`Slash commands reloaded.\n${out}`);
+		}else{
+			const out = ctx.commands.reload_slash(args[0]);
+			ctx.channel.send(`Slash commands ${args[0]} reloaded (${out}).`);
 		}
 	}
 };
