@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "@discordjs/builders": "^0.6.0",
+    "@discordjs/rest": "^0.1.0-canary.0",
+    "cheerio": "^1.0.0-rc.10",
+    "colors": "^1.4.0",
+    "discord-api-types": "^0.22.0",
+    "discord.js": "^13.1.0",
+    "gamedig": "^3.0.7",
+    "lua-in-js": "^2.2.0",
+    "moment": "^2.29.1",
+    "needle": "^3.0.0",
+    "node-emoji": "^1.11.0",
+    "querystring": "^0.2.1",
+    "vmsq": "^2.1.0"
+  }
+}
