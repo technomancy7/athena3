@@ -14,5 +14,8 @@
     "querystring": "^0.2.1",
     "vmsq": "^2.1.0"
   },
-  "main": "index.js"
+  "main": "index.js",
+  "scripts":{
+    "rebuild_slash": "node slash.js"
+  }
 }

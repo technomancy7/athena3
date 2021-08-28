@@ -5,70 +5,27 @@ function nocache(module) {
 	require("fs").watchFile(require("path").resolve(module), () => {delete require.cache[require.resolve(module)];});
 }
 
-
-class Command {
-    constructor(data) {
-        this.name=data.name;
-        this.execute=data.execute;
-        this.help=data.help;
-        if(data.brief!=undefined) this.brief=data.brief;
-        else if(this.help!=undefined) this.brief=this.help.split("\n")[0];
-        else this.brief="";
-
-        if(data.usage!=undefined) this.usage=data.usage; 
-        if(data.group!=undefined) this.group=data.group;
-        if(data.aliases!=undefined) this.aliases=data.aliases; else this.aliases=[];
-        if(data.flags!=undefined) this.flags=data.flags;  else this.flags=[]; 
-    }
-}
-
-class ExtManager {
-    constructor(client, prefix){
+class SlashManager {
+    constructor(client){
         this.client = client;
         this.commands = {};
         this.aliasMap = {};
-        this.slash = {}
+    
         this.threads = {};
-        if (prefix == undefined){this.prefix = ".";}else{this.prefix = prefix;}
     };
 
     process_commands(client, cfg, msg){
-        if (msg.content.startsWith(this.prefix)){
-            var cmd = msg.content.replace(this.prefix, "");
-            var args = cmd.split(" ");
-            var command = args.shift();
-            var ctx = new Ctx(this, client, cfg, msg);
-            try {
-                this.run(command, ctx);
-            }catch(err){
-                msg.channel.send(common.wrap(err));
-            }
-    
+        var cmd = msg.content.replace(this.prefix, "");
+        var args = cmd.split(" ");
+        var command = args.shift();
+        var ctx = new Ctx(this, client, cfg, msg);
+        try {
+            this.run(command, ctx);
+        }catch(err){
+            msg.channel.send(common.wrap(err));
         }
     };
     
-    reload_slash(target){
-        if (target != undefined) {
-            nocache(`./slash/${target}`);
-            const command = require(`./slash/${target}`);
-            for (const c of Object.keys(command)){
-                this.slash[c] = command[c];
-                console.log(this.slash);
-            }
-        } else {
-            const commandFiles = fs.readdirSync('./slash').filter(file => file.endsWith('.js'));
-
-            for (const file of commandFiles) {
-                nocache(`./slash/${file}`);
-                const command = require(`./slash/${file}`);
-                for (const c of Object.keys(command)){
-                    this.slash[c] = command[c];
-                    console.log(this.slash);
-                }
-            }
-        }
-    }
-
     reload_ext(target){
         if (target != undefined){
             nocache(`./ext/${target}`);

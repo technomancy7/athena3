@@ -1,4 +1,5 @@
 const { Client, Intents } = require('discord.js');
+const fs = require('fs');
 var cfg = require('./config.json');
 token = cfg.token;
 prefix = cfg.prefix;
@@ -11,6 +12,7 @@ var com = new ext.ExtManager(client, prefix);
 client.once('ready', () => {
 	com.reload_ext();
 	com.reload_threads();
+    com.reload_slash();
 	console.log('Ready!');
 });
 
@@ -23,17 +25,20 @@ client.on('messageCreate', async (msg) => {
 });
 
 client.on('interactionCreate', async interaction => {
-	if (interaction.isCommand()){
-        const { commandName } = interaction;
+	if (interaction.isCommand()) {
+        const command = com.slash[interaction.commandName];
 
-        if (commandName === 'ping') {
-            await interaction.reply('Pong!');
-        } else if (commandName === 'server') {
-            await interaction.reply('Server info.');
-        } else if (commandName === 'user') {
-            await interaction.reply('User info.');
+        if (!command) return;
+    
+        try {
+            await command.execute(interaction);
+        } catch (error) {
+            console.error(error);
+            await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
         }
     }
+
+
 });
 
 client.login(token);
