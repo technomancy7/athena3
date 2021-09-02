@@ -19,6 +19,9 @@ class Command {
         if(data.group!=undefined) this.group=data.group;
         if(data.aliases!=undefined) this.aliases=data.aliases; else this.aliases=[];
         if(data.flags!=undefined) this.flags=data.flags;  else this.flags=[]; 
+
+        this.NAME=data.name;
+        if(data.MODULE!=undefined) this.MODULE=data.MODULE; else this.MODULE="None";
     }
 }
 
@@ -29,6 +32,9 @@ class ExtManager {
         this.aliasMap = {};
         this.slash = {}
         this.threads = {};
+
+        this.cleanups = {};
+        this.moduleNames = [];
         if (prefix == undefined){this.prefix = ".";}else{this.prefix = prefix;}
     };
 
@@ -89,18 +95,52 @@ class ExtManager {
             }
         }
     }
-    // TODO Seperate reload in to loading and unloading
+    // TODO Seperate reload in to loading and unloading(
+    unload_ext(target){
+        if (target != undefined && this.commands[target] != "undefined"){
+            if(this.cleanups[target] != undefined){
+                this.cleanups[target](this);
+                delete this.cleanups[target];
+            }
+            for(let com in this.commands){
+                let cmd = this.commands[com];
+                if(cmd.MODULE == target){
+                    delete this.commands[com];
+                }
+            }
+        } else if(target == undefined) {
+            for(let module in this.moduleNames){
+                if(this.cleanups[module] != undefined){
+                    this.cleanups[module](this);
+                    delete this.cleanups[module];
+                }
+                for(let com in this.commands){
+                    let cmd = this.commands[com];
+                    if(cmd.MODULE == module){
+                        delete this.commands[com];
+                    }
+                } 
+            }
+        }
+    }
     reload_ext(target){
+        this.unload_ext(target);
+        this.load_ext(target);
+    }
+    load_ext(target){
         if (target != undefined){
             nocache(`./ext/${target}`);
             var count = 0;
             const command = require(`./ext/${target}`);
             for (const c of Object.keys(command)){
+                command[c].MODULE = target.split(".")[0];
+                command[c].NAME = c;
                 this.addCommand(c, command[c]);
                 count += 1;
             }
-
+            this.moduleNames.push(target.split(".")[0]);
             if(command.onLoad != undefined) command.onLoad(this);
+            if(command.onRemove != undefined) this.cleanups[target.split(".")[0]] = command.onRemove;
             return count;
             
         }else{
@@ -113,9 +153,13 @@ class ExtManager {
                 nocache(`./ext/${file}`);
                 const command = require(`./ext/${file}`);
                 for (const c of Object.keys(command)){
+                    command[c].MODULE = file.split(".")[0];
+                    command[c].NAME = c;
                     this.addCommand(c, command[c]);
                 }
                 if(command.onLoad != undefined) command.onLoad(this);
+                if(command.onRemove != undefined) this.cleanups[file.split(".")[0]] = command.onRemove;
+                this.moduleNames.push(file.split(".")[0]);
             }
             
             return commandFiles;

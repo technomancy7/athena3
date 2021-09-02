@@ -2,6 +2,7 @@
   "dependencies": {
     "@discordjs/builders": "^0.6.0",
     "@discordjs/rest": "^0.1.0-canary.0",
+    "canvas": "^2.8.0",
     "cheerio": "^1.0.0-rc.10",
     "colors": "^1.4.0",
     "discord-api-types": "^0.22.0",
@@ -12,10 +13,12 @@
     "needle": "^3.0.0",
     "node-emoji": "^1.11.0",
     "querystring": "^0.2.1",
-    "vmsq": "^2.1.0"
+    "vmsq": "^2.1.0",
+    "xml-js": "^1.6.11"
   },
   "main": "index.js",
-  "scripts":{
-    "rebuild_slash": "node slash.js"
+  "scripts": {
+    "rebuild_slash": "node slash.js",
+    "images": "node tests/images.js"
   }
 }

@@ -12,10 +12,50 @@ const cheerio = require('cheerio');
 const checks = require('../checks.js');
 const nc = require('../netcrawler.js');
 const querystring = require('querystring');
+const { createCanvas, loadImage } = require('canvas')
 
-exports.onLoad = function(ext) {
-	console.log("Ext loaded.");
-	ext.client.on('guildMemberAdd', async member => {
+async function convertImage(path, toType = "jpeg", cb){
+    loadImage(path).then((img) => {
+        const canvas = createCanvas(img.height, img.width)
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0);
+        let paths = path.split("/")
+        let outf = paths[paths.length-1].split(".")[0]
+        let out;
+        let stream;
+        if(toType == "jpeg" || toType == "jpg") {
+			outf = outf+".jpeg"
+            stream = canvas.createJPEGStream()
+        } else {
+			outf = outf+".png"
+            stream = canvas.createPNGStream()
+        }
+		out = fs.createWriteStream(rootDir+'/img/'+outf)
+        stream.pipe(out)
+        out.on('finish', () =>  console.log(`The ${toType} file was created.`))
+		if(cb != undefined){
+			cb(outf, stream);
+		}
+      }).catch(err => {
+        console.log('oh no!', err)
+    })
+}
+
+async function handleMsgAttachments(msg){
+	let autofmt_exts = ["bmp"];
+	msg.attachments.each(async (atch) => {
+		if(autofmt_exts.includes(atch.name.split(".")[1])){
+			convertImage(atch.url, 'jpg', function(filename, stream) {
+				const attachment = new discord.MessageAttachment(stream, filename);
+				msg.reply({ files: [attachment] });
+			});
+		}
+	});
+}
+
+async function handleUserJoin(member){
+	let cfg = require(rootDir+'config.json')
+	if(cfg[member.guild.id] && cfg[member.guild.id].alertChannel){
 		const em = new discord.MessageEmbed();
 
 		em.addField(`${member.displayName} (${member.id})`,`Joined at ${member.joinedAt.toDateString()}
@@ -25,8 +65,19 @@ exports.onLoad = function(ext) {
 		em.setThumbnail(member.user.displayAvatarURL());
 		let chan = member.guild.channels.cache.some(c => c.id === "421285829818974209")
 		await chan.send(em);
-	});
+	}
 }
+
+exports.onRemove = function(ext){
+	ext.client.removeListener('messageCreate', handleMsgAttachments);
+	ext.client.removeListener('guildMemberAdd', handleUserJoin);
+}
+
+exports.onLoad = function(ext) {
+	ext.client.on('messageCreate', handleMsgAttachments);
+	ext.client.on('guildMemberAdd', handleUserJoin);
+}
+
 exports.replytest = {
 	help: "Test",
 	aliases: ['reply'],
@@ -219,13 +270,33 @@ exports.set = {
 	execute: async function(ctx) {
 		let args = ctx.args;
 		if (!checks.isOwner(ctx)){return;}
-		const key = args.shift();
+		let group = "";
+		let key = args.shift();
 		var value = args.join(" ");
+		if (['undefined',  'nil', 'null', 'none'].includes(value)){ value = undefined; }
+		if (['[]', 'new Array()'].includes(value)){ value = []; }
 
-		if (['undefined',  'nil', 'null', 'none'].includes(value)){value = undefined;}
-		if (['[]', 'new Array()'].includes(value)){value = [];}
-		ctx.cfg.set(key, value);
-		ctx.channel.send(`Setting **${key}** to **${value}** (${typeof(value)}).`);
+		if(key.includes(".")){
+			group = key.split(".")[0];
+			if(group == ":guild"){
+				group = ctx.guild.id;
+			}
+			key = key.split(".")[1];
+			let nv = ctx.cfg[group];
+			if(nv == undefined) nv = {};
+			nv[key] = value;
+			ctx.cfg[group] = nv;
+			fs.writeFileSync(ctx.cfg.rootDir+"config.json", JSON.stringify(ctx.cfg, null, 2));
+			ctx.channel.send(`Setting **${group} -> ${key}** to **${value}** (${typeof(value)}).`);
+		} else {
+			ctx.cfg[key] = value;
+			fs.writeFileSync(ctx.cfg.rootDir+"config.json", JSON.stringify(ctx.cfg, null, 2));
+			ctx.channel.send(`Setting **${key}** to **${value}** (${typeof(value)}).`);
+		}
+		
+
+
+
 	}
 };
 
@@ -237,7 +308,7 @@ exports.get = {
 	execute: async function(ctx) {
 		let args = ctx.args;
 		if (!checks.isOwner(ctx)){return;}
-		ctx.reply(ctx.cfg.get(args.join (" ")));
+		ctx.reply(ctx.cfg[args.join (" ")]);
 	}
 };
 
@@ -271,7 +342,23 @@ exports.whitelist = {
 		}
 	}
 };
-
+exports.unload = {
+	help: "Unloads extensions",
+	group: "admin",
+	flags: ['$owner'],
+	usage: "[optional: module]",
+	execute: async function(ctx) {
+		let args = ctx.args;
+		if (!checks.isOwner(ctx)){return;}
+		if (args.length == 0){
+			const out = ctx.commands.unload_ext();
+			ctx.channel.send(`Extensions unloaded.\n${out}`);
+		}else{
+			const out = ctx.commands.unload_ext(args[0]);
+			ctx.channel.send(`Extension ${args[0]} unloaded (${out}).`);
+		}
+	}
+};
 exports.reload = {
 	help: "Reloads extensions",
 	group: "admin",

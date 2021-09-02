@@ -279,3 +279,20 @@ exports.wolfram = {
 		});		
 	}
 };
+exports.translate = {
+	help: "",
+	group: "api",
+	aliases: [],
+	execute: async function(ctx) {
+		let url = "https://translate.mentality.rip/translate";
+		let text = ctx.args.join(' ');
+		var data = {headers: {"Content-Type": "application/json"}};
+		var p = {"q": text, "source": "auto", "target": "en"}
+		needle.post(url, p, data, function(error, response) {
+			if (!error && response.statusCode == 200){
+				let resp = response.body.translatedText;
+				ctx.reply(resp);
+			}
+		});		
+	}
+};

@@ -1,6 +1,6 @@
 const { Client, Intents } = require('discord.js');
 const fs = require('fs');
-var cfg = require('./config.json');
+global.cfg = require('./config.json');
 token = cfg.token;
 prefix = cfg.prefix;
 let { print } = require("./common.js")
@@ -8,9 +8,11 @@ var ext = require('./ext.js');
 var colors = require('colors');
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 var com = new ext.ExtManager(client, prefix);
+global.extman = com;
+global.rootDir = cfg.rootDir;
 
 client.once('ready', () => {
-	com.reload_ext();
+	com.load_ext();
 	com.reload_threads();
     com.reload_slash();
 	console.log('Ready!');
