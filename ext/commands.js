@@ -598,7 +598,7 @@ exports.dog = {
 };
 
 exports.stonerdog = {
-    help: " ",
+    help: "Gets a nice doggo.",
     group: "animals",
     execute: async function(ctx) {
         needle.get('https://wrathplus.com/api/freya/get_stoner_dog', (error, response) => {
