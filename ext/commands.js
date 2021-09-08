@@ -623,7 +623,7 @@ exports.catfact = {
 };
 
 exports.dogfact = {
-	help: " ",
+	help: "Information about good boy",
 	group: "animals",
 	execute: async function(ctx) {
 		needle.get('https://some-random-api.ml/facts/dog', (error, response) => {
