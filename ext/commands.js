@@ -622,6 +622,25 @@ exports.catfact = {
 	}
 };
 
+exports.purge = {
+	help: "",
+	group: "admin",
+	execute: async function(ctx) {
+		if(!sender.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)){
+			ctx.reply("You don't have permission to do this.")
+			return;
+		}
+		let cid = ctx.argsRaw;
+		const channel = ctx.client.channels.cache.get(cid);
+		channel.messages.fetch({ limit: 100 }).then(messages => {
+			console.log(`Received ${messages.size} messages`);
+			//Iterate through the messages here with the variable "messages".
+			messages.forEach(message => message.delete())
+		  })
+		  .catch((err) => ctx.reply(`ERROR: ${err}`))
+	}
+};
+	
 exports.dogfact = {
 	help: "Information about good boy",
 	group: "animals",

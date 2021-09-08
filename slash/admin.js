@@ -9,6 +9,9 @@ exports.warn = {
             em.addField(`${member.displayName} (${member.id})`,`Joined at ${member.joinedAt.toDateString()}
             ${member.toString()}`);
             em.setThumbnail(member.user.displayAvatarURL());
+            if(ctx.cfg.users == undefined) ctx.cfg.users = {};
+            if(ctx.cfg.users[member.id] == undefined) ctx.cfg.users[member.id] = {}
+            
             let msg = await interaction.reply(`This is a test: ${ctx.cfg["rootDir"]}`, { embeds: [em] });
             
         } else {

@@ -13,7 +13,13 @@ for (let tok of process.argv){
         token = cfg[tok_key]
     }
 }
-console.log(token)
+
+process.on('unhandledRejection', (error) => console.error('Uncaught Promise Rejection', error));
+process.on('uncaughtException', function(err) {
+	console.log('Caught exception: ' + err);
+	if (last_channel != undefined) last_channel.send(`Unhandled Error: ${err}`);
+});
+
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 var com = new ext.ExtManager(client, prefix);
 global.extman = com;
