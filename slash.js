@@ -1,8 +1,8 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
-const { clientId, guildId, token } = require('./config.json');
-
+const { clientId, guildId, token_freya } = require('./config.json');
+let token = token_freya
 const commands = [
 	new SlashCommandBuilder().setName('server').setDescription('Replies with server info!'),
 	
@@ -13,6 +13,10 @@ const commands = [
 	new SlashCommandBuilder().setName('kick').setDescription('Kicks a user.').addUserOption(option => option.setName('target').setDescription('Select a person').setRequired(true)),
 	
 	new SlashCommandBuilder().setName('kickban').setDescription('Bans a user.').addUserOption(option => option.setName('target').setDescription('Select a person').setRequired(true)),
+	
+	new SlashCommandBuilder().setName('warn').setDescription('Warns a user.')
+	.addUserOption(option => option.setName('target').setDescription('Select a person').setRequired(true))
+	.addStringOption(option => option.setName('reason').setDescription('Add a reason').setRequired(true))
 	
 ].map(command => command.toJSON());
 

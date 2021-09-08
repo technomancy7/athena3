@@ -8,6 +8,7 @@
     "discord-api-types": "^0.22.0",
     "discord.js": "^13.1.0",
     "gamedig": "^3.0.7",
+    "intercept-stdout": "^0.1.2",
     "lua-in-js": "^2.2.0",
     "moment": "^2.29.1",
     "needle": "^3.0.0",

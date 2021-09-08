@@ -7,7 +7,8 @@ exports.isOwner = function(ctx){
 };
 
 exports.isWhitelisted = function(ctx){
-	return ctx.cfg.get('whitelist', []).includes(ctx.member.id);	
+	if (ctx.cfg.whitelist == undefined) return false;
+	return ctx.cfg.whitelist.includes(ctx.member.id);	
 };
 
 // TODO's

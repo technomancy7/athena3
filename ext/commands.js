@@ -597,6 +597,21 @@ exports.dog = {
     }
 };
 
+exports.stonerdog = {
+    help: " ",
+    group: "animals",
+    execute: async function(ctx) {
+        needle.get('https://wrathplus.com/api/freya/get_stoner_dog', (error, response) => {
+            if (!error && response.statusCode == 200){
+				//let js = JSON.parse(response.body);
+                ctx.reply(response.body.content);
+			}
+
+        });
+        
+    }
+};
+
 exports.catfact = {
 	help: " ",
 	group: "animals",
