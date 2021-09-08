@@ -634,7 +634,7 @@ exports.dogfact = {
 };
 	
 exports.dog2 = {
-	help: "",
+	help: "A random good boy",
 	group: "animals",
 	aliases: [],
 	execute: async function(ctx) {
