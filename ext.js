@@ -47,7 +47,8 @@ class ExtManager {
             try {
                 this.run(command, ctx);
             }catch(err){
-                msg.channel.send(common.wrap(err));
+                msg.channel.send(common.wrap(err.stack));
+                console.log(err.stack);
             }
     
         }
@@ -65,10 +66,11 @@ class ExtManager {
                 //this.execute(ctx, interaction);
                 await command.execute(ctx, interaction);
             }catch(err){
-                interaction.channel.send(common.wrap(err));
+                interaction.channel.send(common.wrap(err.stack));
+                console.log(err.stack);
             }
         } catch (error) {
-            console.error(error);
+            console.error(error.stack);
             await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
         }
 
@@ -250,7 +252,10 @@ class ExtManager {
             try {
                 let l = await this.commands[name].execute(ctx);
                 if(l != undefined) {await ctx.reply(l);}
-            }catch(err) {ctx.channel.send(common.wrap(err));}
+            }catch(err) {
+                ctx.channel.send(common.wrap(err.stack));
+                console.log(err.stack);
+            }
         }else if (this.aliasMap[name] != undefined){
             this.run(this.aliasMap[name], ctx);
         }

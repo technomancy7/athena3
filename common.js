@@ -163,7 +163,37 @@ exports.space = function(base, count, next){
 	return pre+next;
 };
 
-exports.print = function(message, tag="none", timestamp=true){
+class KLogger {
+	constructor(path) {
+		this.path = path;
+		this.lines = [];
+		if(fs.existsSync(this.path)){
+			this.rawdata = fs.readFileSync(this.path, "utf8");
+			this.lines = this.rawdata.split("\n");
+		}
+
+
+		console.log("Logger for "+path+" open.")
+	}
+
+	add(line){
+		this.lines.push(line);
+	}
+
+	save(){
+		fs.writeFileSync(this.path, this.lines.join("\n"));
+	}
+}
+exports.KLogger = KLogger;
+exports.print = function(message, args = {}){
+	const options = Object.assign({}, {
+		tag: "none",
+		timestamp: true,
+		logger: null	
+	}, args);
+	let tag = options.tag;
+	let timestamp = options.timestamp;
+
 	let ts = "";
 	let stag = "";
 	if (timestamp){
@@ -181,6 +211,10 @@ exports.print = function(message, tag="none", timestamp=true){
 		console.log(ts+" "+stag+" | "+message);
 	}else{
 		console.log(ts+message);
+	}
+	if(options.logger != null){
+		options.logger.add(ts+" "+message);
+		options.logger.save();
 	}
 };
 
@@ -201,3 +235,12 @@ global.isArray = function(a) {
 global.isObject = function(a) {
     return exports.isObject(a);
 };
+
+exports.getData = function(name){
+    let d = fs.readFileSync(rootDir+"data/"+name+".json");
+    return JSON.parse(d);
+}
+
+exports.saveData = function(name, data){
+    fs.writeFileSync(rootDir+"data/"+name+".json", JSON.stringify(data, null, 2));
+}

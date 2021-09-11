@@ -3,10 +3,10 @@ const fs = require('fs');
 global.cfg = require('./config.json');
 let token = cfg.token_valk;
 prefix = cfg.prefix;
-let { print } = require("./common.js")
+let { print, KLogger } = require("./common.js")
 var ext = require('./ext.js');
 var colors = require('colors');
-
+var last_channel = undefined;
 for (let tok of process.argv){
     if (tok.startsWith("token")){
         let tok_key = "token_"+tok.split(":")[1]
@@ -17,16 +17,17 @@ for (let tok of process.argv){
 process.on('unhandledRejection', (error) => console.error('Uncaught Promise Rejection', error));
 process.on('uncaughtException', function(err) {
 	console.log('Caught exception: ' + err);
-	if (last_channel != undefined) last_channel.send(`Unhandled Error: ${err}`);
+    console.log(err.stack)
+	if (last_channel != undefined) {
+        last_channel.send(`Unhandled Error: ${err}`);
+    };
 });
 
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES] });
 var com = new ext.ExtManager(client, prefix);
 global.extman = com;
 global.rootDir = cfg.rootDir;
-print(process.argv)
-
-
+global.logger = new KLogger(rootDir+"logs/system.log");
 
 client.once('ready', () => {
 	com.load_ext();
@@ -39,7 +40,7 @@ client.once('ready', () => {
 client.on('messageCreate', async (msg) => {
     if (!msg.author.bot) {
         last_channel = msg.channel;
-        print(' [ '+msg.channel.name+' : '+msg.guild.name+' ] '+msg.author.tag+': '+msg.content, tag='say');
+        print(' [ '+msg.channel.name+' : '+msg.guild.name+' ] '+msg.author.tag+': '+msg.content, {tag: 'say', logger: logger});
         com.process_commands(client, cfg, msg);
     }
 });

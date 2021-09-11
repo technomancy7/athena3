@@ -3,246 +3,10 @@ var fs = require('fs');
 var common = require("../common.js");
 const discord = require('discord.js');
 var emoji = require('node-emoji');
+const nc = require('../netcrawler.js');
+const cheerio = require('cheerio');
+const querystring = require('querystring');
 
-function cleanupHost(i){
-	i = i.replace("Ã¿", "");
-	i = i.replace("Ã¿Ã¿Ã¿", "");
-	i = i.replace("ÂÃ¿", "");
-	i = i.replace("Ã¿Â", "");
-	i = i.replace("Ã¿", "");
-	return i;
-}
-exports.addcustomlist = {
-	help: "Save a server query",
-	aliases: ["cs"],
-	group: "api",
-	execute: async function(ctx){
-		var ls = ctx.cfg.get("custom_servers_"+ctx.guild.id, []);
-		if (!ls.includes(ctx.argsRaw)){
-			ls.push(ctx.argsRaw);
-			ctx.cfg.set("custom_servers_"+ctx.guild.id, ls);
-			ctx.reply(`${ctx.argsRaw} added.`);
-		} else ctx.reply(`${ctx.argsRaw} already exists.`);
-	}
-};
-exports.customlist = {
-	help: "List a server query",
-	aliases: ["lcs"],
-	group: "api",
-	execute: async function(ctx){
-		var ls = ctx.cfg.get("custom_servers_"+ctx.guild.id, []);
-		ctx.reply(`${ls}.`);
-	}
-};
-exports.delcustomlist = {
-	help: "UnSave a server query",
-	aliases: ["ucs"],
-	group: "api",
-	execute: async function(ctx){
-		var ls = ctx.cfg.get("custom_servers_"+ctx.guild.id, []);
-		if (ls.includes(ctx.argsRaw)){
-			ls.cut(ctx.argsRaw);
-			ctx.cfg.set("custom_servers_"+ctx.guild.id, ls);
-			ctx.reply(`${ctx.argsRaw} removed.`);
-		} else ctx.reply(`${ctx.argsRaw} doesnt exist.`);
-	}
-};
-exports.srv = {
-	help: "Show a server query",
-	aliases: ["cservers"],
-	group: "api",
-	execute: async function(ctx){
-		var ls = ctx.cfg.get("custom_servers_"+ctx.guild.id, []);
-		for (i=0;i<ls.length;i++){
-			let servern = ls[i];
-			console.log("333networks.com/json/"+servern);
-			needle.get("333networks.com/json/"+servern, function(error, response) {
-				const embed = new discord.MessageEmbed();
-				if (!error && response.statusCode == 200){
-					const server = response.body;
-					console.log(server);
-					var cf = "";
-					if (server.country != undefined) cf = emoji.get("flag-"+server.country.toLowerCase());
-					var text = `**Map**: ${server.mapname}\n**Game**: ${server.gametype}\n**Admin**: ${server.adminname} (${server.adminemail})\n**Address**: ${server.ip}:${server.port}\n`;
-
-					if (server.mutators != "None"){text += `**Mutators**: ${server.mutators}\n`;}
-					if (server.goalteamscore != undefined){text += `**Team Score Limit**: ${server.goalteamscore}\n`;}
-					if (server.fraglimit != undefined){text += `**Frag Limit**: ${server.fraglimit}\n`;}
-					embed.addField(`${cf} ${cleanupHost(server.hostname)} (${server.numplayers}/${server.maxplayers})`, text);
-
-					for (i=0;i<server.numplayers;i++){
-						let p = server[`player_${i}`];
-						embed.addField(p.player, `**Ping**: ${p.ping} | **Frags**: ${p.frags} | ${p.skin}; ${p.mesh}\n`);
-					}
-				}else{
-					embed.addField("ERROR", `Host address did not respond. ${error} ${response.statusCode}`);
-				}
-				
-				ctx.say(embed);
-			});
-		}
-	}
-};
-
-exports.savealias = {
-	help: "Save a server query",
-	aliases: ["serveralias", "333nalias"],
-	group: "api",
-	execute: async function(ctx){
-		var alias = ctx.argsRaw.split("=")[0];
-		var query = ctx.argsRaw.split("=")[1];
-		ctx.cfg.set("333alias_"+alias, query);
-	}
-};
-
-exports.tri = {
-	help: "List 333networks",
-	aliases: ["list", "dx", "serv", "srv", "servers"],
-	group: "api",
-	execute: async function(ctx){
-		const url = "333networks.com/json/";
-		if (ctx.argsRaw == "" && ctx.guild.id == "518736692346093569") ctx.argsRaw = "unreal";
-		if (ctx.argsRaw.startsWith("#")){ctx.argsRaw = ctx.cfg.get("333alias_"+ctx.argsRaw.replace("#", ""));}
-		if (ctx.argsRaw == "undefined"){ctx.say("Error handling input...");return;}
-		if (ctx.argsRaw.includes("/")){ //SERVER mode
-			needle.get(url+ctx.argsRaw, function(error, response) {
-				const embed = new discord.MessageEmbed();
-				if (!error && response.statusCode == 200){
-					
-					const server = response.body;
-					var cf = "";
-					if (server.country != undefined) cf = emoji.get("flag-"+server.country.toLowerCase());
-					var text = `**Map**: ${server.mapname}\n**Game**: ${server.gametype}\n**Admin**: ${server.adminname} (${server.adminemail})\n**Address**: ${server.ip}:${server.port}\n`;
-
-					if (server.mutators != "None"){text += `**Mutators**: ${server.mutators}\n`;}
-					if (server.goalteamscore != undefined){text += `**Team Score Limit**: ${server.goalteamscore}\n`;}
-					if (server.fraglimit != undefined){text += `**Frag Limit**: ${server.fraglimit}\n`;}
-					embed.addField(`${cf} ${cleanupHost(server.hostname)} (${server.numplayers}/${server.maxplayers})`, text);
-
-					for (i=0;i<server.numplayers;i++){
-						console.log(i);
-						let p = server[`player_${i}`];
-						embed.addField(p.player, `**Ping**: ${p.ping} | **Frags**: ${p.frags} | ${p.skin}; ${p.mesh}\n`);
-					}
-				}else{
-					embed.addField("ERROR", `Host address did not respond. ${error} ${response.statusCode}`);
-				}
-				
-				ctx.say(embed);
-			});	
-		}else{ //MS-LIST mode
-			var g = ctx.argsRaw;
-			var page = 0;
-			if (g.includes(";")){
-				page = g.split(";")[1].toNumber();
-				g = g.split(";")[0];
-			}
-			var start = 0;
-			var end = 10;
-			if (page > 0){
-				start = page*10;
-				end = (page+1)*10;
-			}
-			needle.get(url+g+"?s=numplayers&o=d", function(error, response) {
-				const embed = new discord.MessageEmbed();
-				if (!error && response.statusCode == 200){
-					
-					var i = 0;
-
-					for (const server of response.body[0]){
-						if (i >= start){
-							var cf = "";
-							if (server.country != undefined)
-								cf = emoji.get("flag-"+server.country.toLowerCase());
-							embed.addField(`${cf} ${cleanupHost(server.hostname)} (${server.numplayers}/${server.maxplayers})`,
-										   `**Map**: ${server.mapname}\n**Game**: ${server.gametype}\n**Address**: ${server.ip}:${server.hostport}`);
-						}
-						i += 1;
-						if (i == end) break;
-					}
-
-					embed.addField(`Results Page #${page} (${start}-${end})`,
-								   `Game: ${g.lower()}\nServers: ${response.body[1].total}\nPlayers: ${response.body[1].players}`);
-				}else{
-					console.log(response.body)
-					embed.addField("ERROR", response.statusCode);
-				}
-				ctx.say(embed);
-			});		
-		}
-		
-	}
-};
-
-exports.trih = {
-	help: "Searches 333networks",
-	aliases: ["listh"],
-	group: "api",
-	execute: async function(ctx){
-		const url = "333networks.com/json/";
-		if (ctx.argsRaw == "" && ctx.guild.id == "518736692346093569") ctx.argsRaw = "unreal/176.9.50.118";
-
-		var g = ctx.argsRaw.split("/")[0];
-		var search = ctx.argsRaw.split("/")[1];
-
-		needle.get(url+g+"?s=numplayers&o=d", function(error, response) {
-			const embed = new discord.MessageEmbed();
-			if (!error && response.statusCode == 200){
-				var i = 0;
-
-				for (const server of response.body[0]){
-					if(server.ip.startsWith(search)){
-						var cf = emoji.get("flag-"+server.country.toLowerCase());
-						embed.addField(`${cf} ${cleanupHost(server.hostname)} (${server.numplayers}/${server.maxplayers})`,
-									   `**Map**: ${server.mapname}\n**Game**: ${server.gametype}\n**Address**: ${server.ip}:${server.hostport}`);
-					}
-					
-				}
-
-				embed.addField(`Results`,
-							   `Game: ${g.lower()}\nServers: ${response.body[1].total}\nPlayers: ${response.body[1].players}`);
-			}else{
-				embed.addField("ERROR", error);
-			}
-			ctx.say(embed);
-		});		
-	}
-};
-
-exports.tris = {
-	help: "Searches 333networks",
-	aliases: ["lists"],
-	group: "api",
-	execute: async function(ctx){
-		const url = "333networks.com/json/";
-		if (ctx.argsRaw == "" && ctx.guild.id == "518736692346093569") ctx.argsRaw = "unreal/newbiesplayground";
-
-		var g = ctx.argsRaw.split("/")[0];
-		var search = ctx.argsRaw.split("/")[1];
-
-		needle.get(url+g+"?s=numplayers&o=d&q="+search, function(error, response) {
-			const embed = new discord.MessageEmbed();
-			if (!error && response.statusCode == 200){
-				var i = 0;
-
-				for (const server of response.body[0]){
-						var cf = emoji.get("flag-"+server.country.toLowerCase());
-						embed.addField(`${cf} ${cleanupHost(server.hostname)} (${server.numplayers}/${server.maxplayers})`,
-									   `**Map**: ${server.mapname}\n**Game**: ${server.gametype}\n**Address**: ${server.ip}:${server.hostport}`);
-					i += 1;
-					if (i == 10) break;
-				}
-
-				embed.addField(`Results`,
-							   `Game: ${g.lower()}\nServers: ${response.body[1].total}\nPlayers: ${response.body[1].players}`);
-			}else{
-				embed.addField("ERROR", error);
-			}
-			ctx.say(embed);
-		});		
-	}
-		
-};
 
 exports.wquery = {
 	help: "",
@@ -292,6 +56,331 @@ exports.translate = {
 			if (!error && response.statusCode == 200){
 				let resp = response.body.translatedText;
 				ctx.reply(resp);
+			}
+		});		
+	}
+};
+
+exports.whois = {
+	help: "IP information lookup",
+	aliases: ['ip'],
+	group: "utility",
+	usage: "[IP Address]",
+	execute: async function(ctx) {
+		let args = ctx.args;
+		const em = new discord.MessageEmbed();
+		if (args.length == 0){ctx.channel.send("IP required."); return;}
+		needle.get(`https://rest.db.ripe.net/search.json?query-string=${args[0]}&flags=no-filtering&source=RIPE`,function(error, data){
+			for (const c of data.body.objects.object){
+				let m = "";
+				for (const attr of c.attributes.attribute){
+					m += `${attr.name}: ${attr.value}\n`;
+				}
+				
+				em.addField(c["primary-key"].attribute[0].name+" : "+c["primary-key"].attribute[0].value, m);
+
+			}
+			ctx.say(em);
+		});
+	
+	}
+};
+
+exports.weather = {
+	help: "Current weather for location",
+	aliases: ['w'],
+	group: "utility",
+	usage: "[location]",
+	execute: async function(ctx) {
+		let args = ctx.args;
+		if (args.length == 0){ctx.channel.send("location required."); return;}
+		const w = new nc.WeatherAPI(ctx.cfg.get('weatherapikey'));
+
+		await w.current(args.join(" "), function(data){
+			console.log(data);
+			const name = `${data.location.name}, ${data.location.region}, ${data.location.country} (${data.location.tz_id})`;
+			const condition = `The current weather is ${data.current.condition.text}.`;
+			const tempr = `The temperature is ${data.current.temp_c}°C / ${data.current.temp_f}°F (Feels like ${data.current.feelslike_c}°C / ${data.current.feelslike_f}°F)`;
+			const winds = `There is winds from the ${data.current.wind_dir} with speeds of ${data.current.wind_kph} KPH.`;
+			const em = new discord.MessageEmbed()
+			.addField(name, `${condition}\n${tempr}\n${winds}`)
+			.setThumbnail(`https:${data.current.condition.icon}`)
+			.setFooter("Powered by WeatherAPI", "https://www.weatherapi.com/");
+			ctx.channel.send(em);
+
+		});
+	}
+};
+
+exports.forecast = {
+	help: "Current weather for location",
+	aliases: ['fc'],
+	group: "utility",
+	usage: "[location]",
+	execute: async function(ctx) {
+		let args = ctx.args;
+		if (args.length == 0){ctx.channel.send("location required."); return;}
+		const w = new nc.WeatherAPI(ctx.cfg.get('weatherapikey'));
+
+		const em = new discord.MessageEmbed();
+		
+		em.setFooter("Powered by WeatherAPI", "https://www.weatherapi.com/");
+		await w.forecast(args.join(" "), 7 , function(data){
+			for (const day of data.forecast.forecastday){
+				console.log(day);
+				const name = day.date;
+				const condition = `The weather will be ${day.day.condition.text}.`;
+				const tempr = `The temperature will be ${day.day.temp_c}°C / ${day.day.temp_f}°F (Feels like ${day.day.feelslike_c}°C / ${day.day.feelslike_f}°F)`;
+				const winds = `There will be winds from the ${day.day.wind_dir} with speeds of ${day.day.wind_kph} KPH.`;
+				const astro = `Sunrise will be at ${day.astro.sunrise}, and sunset will be at ${day.astro.sunset}.\Moonrise will be at ${day.astro.moonrise}, and moonset will be at ${day.astro.moonset}`;
+				
+				em.addField(name, `${condition}\n${tempr}\n${winds}\n${astro}`);
+				
+				em.setDescription(`${data.location.name}, ${data.location.region}, ${data.location.country} (${data.location.tz_id})`);
+			}
+
+			
+			ctx.channel.send(em);
+
+		});
+	}
+};
+
+exports.youtube = {
+	help: "Searches youtube.",
+	aliases: ['yt'],
+	group: "fun",
+	execute: async function(ctx) {
+
+	}
+};
+
+
+
+// ANIMALS
+
+
+exports.cat = {
+    help: " ",
+    group: "animals",
+    aliases: [],
+    execute: async function(ctx) {
+        const h = {"x-api-key": "dca2da26-0ed8-406b-a99d-b8e86d165c99"};
+
+        needle.get('https://api.thecatapi.com/v1/images/search', h, (error, response) => {
+            if (!error && response.statusCode == 200)
+                ctx.reply(response.body[0]['url']);
+        });
+    }
+};
+
+exports.dog = {
+    help: " ",
+    group: "animals",
+    execute: async function(ctx) {
+        needle.get('https://random.dog/woof.json', (error, response) => {
+            if (!error && response.statusCode == 200)
+                ctx.reply(response.body.url);
+        });
+        
+    }
+};
+
+exports.stonerdog = {
+    help: "Gets a very nice doggo.",
+    group: "animals",
+    execute: async function(ctx) {
+        needle.get('https://wrathplus.com/api/freya/get_stoner_dog', (error, response) => {
+            if (!error && response.statusCode == 200){
+                ctx.reply(response.body.content);
+			}
+
+        });
+        
+    }
+};
+
+exports.catfact = {
+	help: " ",
+	group: "animals",
+	execute: async function(ctx) {
+		needle.get('https://some-random-api.ml/facts/cat', (error, response) => {
+			if (!error && response.statusCode == 200)
+				ctx.reply(response.body.fact);
+		});		
+	}
+};
+
+
+exports.dogfact = {
+	help: "Information about good boy",
+	group: "animals",
+	execute: async function(ctx) {
+		needle.get('https://some-random-api.ml/facts/dog', (error, response) => {
+			if (!error && response.statusCode == 200)
+				ctx.reply(response.body.fact);
+		});		
+	}
+};
+	
+exports.dog2 = {
+	help: "A random good boy",
+	group: "animals",
+	aliases: [],
+	execute: async function(ctx) {
+		needle.get('https://dog.ceo/api/breeds/image/random', function(error, response) {
+			if (!error && response.statusCode == 200)
+				ctx.reply(response.body.message);
+		});
+	}
+};
+
+exports.bird = {
+	help: "",
+	group: "animals",
+	aliases: [],
+	execute: async function(ctx) {
+		needle.get('http://shibe.online/api/birds?count=1&urls=true', function(error, response) {
+			if (!error && response.statusCode == 200)
+				ctx.reply(response.body[0]);
+		});
+	}
+};
+
+exports.shibe = {
+	help: "",
+	group: "animals",
+	aliases: [],
+	execute: async function(ctx) {
+		needle.get('http://shibe.online/api/shibes?count=1&urls=true', function(error, response) {
+			if (!error && response.statusCode == 200)
+				ctx.reply(response.body[0]);
+		});
+	}
+};
+
+exports.fox = {
+	help: "",
+	group: "animals",
+	aliases: [],
+	execute: async function(ctx) {
+		needle.get('https://randomfox.ca/floof/', function(error, response) {
+			if (!error && response.statusCode == 200)
+				ctx.reply(response.body.image);
+		});		
+	}
+};
+
+exports.bun = {
+	help: "",
+	group: "animals",
+	aliases: [],
+	execute: async function(ctx) {
+		needle.get('https://dotbun.com/', function(error, response) {
+			if (!error && response.statusCode == 200){
+				let $ = cheerio.load(response.body);
+				const image = $('img').get(1);
+				const b = $(image).attr('src');
+				ctx.channel.send("https://dotbun.com/"+b);
+			}
+		});
+	}
+};
+
+exports.pika = {
+	group: "meme",
+	execute: async function(ctx) {
+		needle.get('https://some-random-api.ml/pikachuimg', function(error, response) {
+			if (!error && response.statusCode == 200)
+				ctx.reply(response.body.link);
+		});		
+	}
+};
+
+exports.hug = {
+	group: "meme",
+	execute: async function(ctx) {
+		needle.get('https://some-random-api.ml/animu/hug', function(error, response) {
+			if (!error && response.statusCode == 200)
+				ctx.reply(response.body.link);
+		});
+	}
+};
+
+exports.pat = {
+	group: "meme",
+	execute: async function(ctx) {
+		needle.get('https://some-random-api.ml/animu/pat', function(error, response) {
+			if (!error && response.statusCode == 200)
+				ctx.reply(response.body.link);
+		});		
+	}
+};
+
+exports.wink = {
+	group: "meme",
+	execute: async function(ctx) {
+		needle.get('https://some-random-api.ml/animu/wink', function(error, response) {
+			if (!error && response.statusCode == 200)
+				ctx.reply(response.body.link);
+		});		
+	}
+};
+
+exports.duck = {
+	group: "animals",
+	execute: async function(ctx) {
+		needle.get('https://random-d.uk/api/quack', function(error, response) {
+			if (!error && response.statusCode == 200)
+				ctx.reply(response.body.url);
+		});
+	}
+};
+
+exports.redpanda = {
+	group: "animals",
+	execute: async function(ctx) {
+		needle.get('https://some-random-api.ml/img/red_panda', function(error, response) {
+			if (!error && response.statusCode == 200)
+				ctx.reply(response.body.link);
+		});
+	}
+};
+
+exports.panda = {
+	group: "animals",
+	execute: async function(ctx) {
+		needle.get('https://some-random-api.ml/img/panda', function(error, response) {
+			if (!error && response.statusCode == 200)
+				ctx.reply(response.body.link);
+		});		
+	}
+};
+
+exports.urban = {
+	group: "api",
+	execute: async function(ctx) {
+		let page = 0;
+		const ut = (str, max) => ((str.length > max) ? `${str.slice(0, max - 3)}...` : str);
+
+		if (!isNaN(ctx.args[0])){page = ctx.args.shift().toNumber();}
+		const query = querystring.stringify({ term: ctx.args.join(' ') });
+		needle.get(`https://api.urbandictionary.com/v0/define?${query}`, function(error, response) {
+			if (!error && response.statusCode == 200){
+				let list = response.body.list;
+				let answer = list[page];
+				if (answer == undefined){ctx.say(`${ctx.args.join(' ')} not found.`); return;}
+				const embed = new discord.MessageEmbed()
+					  .setColor('#EFFF00')
+					  .setTitle(answer.word)
+					  .setURL(answer.permalink)
+					  .addFields(
+						  { name: 'Definition', value: ut(answer.definition, 1024) },
+						  { name: 'Example', value: ut(answer.example, 1024) },
+						  { name: 'Rating', value: `👍 ${answer.thumbs_up} / 👎 ${answer.thumbs_down}` }
+					  );
+
+				ctx.channel.send(embed);
 			}
 		});		
 	}

@@ -1,0 +1,237 @@
+{
+  "bbc1": {
+    "name": "BBC Radio 1",
+    "description": "BBC Radio 1",
+    "url": "http://bbcmedia.ic.llnwd.net/stream/bbcmedia_radio1_mf_p"
+  },
+  "bbc2": {
+    "name": "BBC Radio 2",
+    "description": "BBC Radio 2",
+    "url": "http://bbcmedia.ic.llnwd.net/stream/bbcmedia_radio2_mf_p"
+  },
+  "bbc3": {
+    "name": "BBC Radio 3",
+    "description": "BBC Radio 3",
+    "url": "http://open.live.bbc.co.uk/mediaselector/5/select/version/2.0/mediaset/http-icy-aac-lc-a/format/pls/vpid/bbc_radio_three.pls"
+  },
+  "bbc4": {
+    "name": "BBC Radio 4",
+    "description": "BBC Radio 4",
+    "url": "http://bbcmedia.ic.llnwd.net/stream/bbcmedia_radio4fm_mf_p"
+  },
+  "bbc5": {
+    "name": "BBC Radio 5",
+    "description": "BBC Radio 5",
+    "url": "http://bbcmedia.ic.llnwd.net/stream/bbcmedia_radio5live_mf_p"
+  },
+  "bbc6": {
+    "name": "BBC Radio 6",
+    "description": "BBC Radio 6",
+    "url": "http://bbcmedia.ic.llnwd.net/stream/bbcmedia_6music_mf_p"
+  },
+  "bbc1x": {
+    "name": "BBC Radio 1 Extra",
+    "description": "BBC Radio 1 Extra",
+    "url": "http://www.bbc.co.uk/radio/listen/live/r1x_aaclca.pls"
+  },
+  "bbc4x": {
+    "name": "BBC Radio 4 Extra",
+    "description": "BBC Radio 4 Extra",
+    "url": "http://www.bbc.co.uk/radio/listen/live/r4x_aaclca.pls"
+  },
+  "bbc5sp": {
+    "name": "BBC Radio 5 Live Sports",
+    "description": "BBC Radio 1",
+    "url": "http://www.bbc.co.uk/radio/listen/live/r5lsp_aaclca.pls"
+  },
+  "onelovehiphop": {
+    "name": "One Love HipHop",
+    "description": "HipHop music.",
+    "url": "http://www.radioson.ru:8009/HipHop1Love.RadioSon.ru.mp3"
+  },
+  "arrow": {
+    "name": "The Arrow",
+    "description": "All Rock Radio station.",
+    "url": "http://media-the.musicradio.com:80/Arrow"
+  },
+  "113fm": {
+    "name": ".113 FM Hits 1992",
+    "description": "The hits.",
+    "url": "http://113fm-edge2.cdnstream.com:80/1768_128"
+  },
+  "dynamic": {
+    "name": "Dynamic33",
+    "description": "Dynamic music.",
+    "url": "http://streaming211.radionomy.com:80/Dynamic33"
+  },
+  "ambient": {
+    "name": "Ambient Radio",
+    "description": "Relaxation music you can chill to.",
+    "url": "http://uk2.internet-radio.com:31491/"
+  },
+  "jazz": {
+    "name": "Smooth Jazz",
+    "description": "Smoooooth like butter.",
+    "url": "http://us4.internet-radio.com:8266/listen.pls&t=.pls"
+  },
+  "heart": {
+    "name": "Heart Hits",
+    "description": "The hits from Heart Radio.",
+    "url": "http://hearthits.online/heart.mp3"
+  },
+  "psy": {
+    "name": "Psystation Twilight",
+    "description": "Not the vampires.",
+    "url": "http://hestia2.cdnstream.com:80/1623_64"
+  },
+  "discord": {
+    "name": "Discord Radio",
+    "description": "No relation.",
+    "url": "http://janus.cdnstream.com:5397/autodj"
+  },
+  "newgrounds": {
+    "name": "Newgrounds Rock",
+    "description": "Is newgrounds still new?",
+    "url": "http://stream01.ungrounded.net:80/rock"
+  },
+  "danceattack": {
+    "name": "Dance Attack",
+    "description": "Attack of the dance.",
+    "url": "http://uk4.internet-radio.com:8049/listen.pls&t=.pls"
+  },
+  "bbc6m": {
+    "name": "BBC 6 Music",
+    "description": "BBC 6 Music",
+    "url": "http://bbcmedia.ic.llnwd.net/stream/bbcmedia_6music_mf_p"
+  },
+  "jpopsuki": {
+    "name": "jpopsuki",
+    "description": "jpopsuki",
+    "url": "http://jpopsuki.fm:8000/autodj"
+  },
+  "jpop": {
+    "name": "J-Pop Project Radio",
+    "description": "Attack of the jpop.",
+    "url": "http://streaming210.radionomy.com:80/J-PopProjectRadio"
+  },
+  "nexus": {
+    "name": "Nexus Radio",
+    "description": "In to the nexus...",
+    "url": "http://173.236.48.82:80/nexuspop.aac"
+  },
+  "capital": {
+    "name": "Capital FM",
+    "description": "The Capital of Radio.",
+    "url": "http://stream.infinynetworks.net:8050/CAPITALFMAAC"
+  },
+  "atlantis": {
+    "name": "Atlantis Radio",
+    "description": "Radio from the sea?...",
+    "url": "http://radio4.pro-fhi.net:9006/atlantis64"
+  },
+  "aire": {
+    "name": "Radio Aire",
+    "description": "Stream for the Armley area of Leeds.",
+    "url": "https://stream-al.planetradio.co.uk/aire.mp3"
+  },
+  "bbclondon": {
+    "name": "BBC London Radio",
+    "description": "From the heart of London.",
+    "url": "http://bbcmedia.ic.llnwd.net/stream/bbcmedia_lrldn_mf_p"
+  },
+  "bbcmanc": {
+    "name": "BBC Manchester Radio",
+    "description": "Radio for the mancs.",
+    "url": "http://bbcmedia.ic.llnwd.net/stream/bbcmedia_lrmanc_mf_p"
+  },
+  "bbcleeds": {
+    "name": "BBC Leeds Radio",
+    "description": "Station for the Leeds area.",
+    "url": "http://bbcmedia.ic.llnwd.net/stream/bbcmedia_lrleeds_mf_p"
+  },
+  "bbcwn": {
+    "name": "BBC World News",
+    "description": "News broadcasting.",
+    "url": "http://bbcwssc.ic.llnwd.net/stream/bbcwssc_mp1_ws-einws"
+  },
+  "bbcsuk": {
+    "name": "BBC World Service UK",
+    "description": "No info.",
+    "url": "http://bbcwssc.ic.llnwd.net/stream/bbcwssc_mp1_ws-eieuk"
+  },
+  "heat": {
+    "name": "Heat Radio",
+    "description": "No info.",
+    "url": "https://stream-al.planetradio.co.uk/heat.mp3"
+  },
+  "kiss": {
+    "name": "Kiss Fresh Radio",
+    "description": "No info.",
+    "url": "https://stream-al.planetradio.co.uk/kissfresh.mp3"
+  },
+  "kerrang": {
+    "name": "Kerrang Radio",
+    "description": "No info.",
+    "url": "https://stream-al.planetradio.co.uk/kerrang.mp3"
+  },
+  "planetrock": {
+    "name": "Planet Rock Radio",
+    "description": "No info.",
+    "url": "https://stream-mz.planetradio.co.uk/planetrock.mp3"
+  },
+  "absolute00": {
+    "name": "Absolute 00 Radio",
+    "description": "Hits from the noughties.",
+    "url": "https://ais.absoluteradio.co.uk/absolute00s.mp3"
+  },
+  "absolute": {
+    "name": "Absolute Radio",
+    "description": "No info.",
+    "url": "https://ais.absoluteradio.co.uk/absoluteradio.mp3"
+  },
+  "magicchilled": {
+    "name": "Magic Chilled",
+    "description": "No info.",
+    "url": "https://stream-mz.planetradio.co.uk/magicchilled.mp3"
+  },
+  "magicmellow": {
+    "name": "Magic Mellow",
+    "description": "No info.",
+    "url": "https://stream-mz.planetradio.co.uk/magicmellow.mp3"
+  },
+  "magic": {
+    "name": "Magic",
+    "description": "No info.",
+    "url": "https://stream.planetradio.co.uk/mag/hi/mp3/"
+  },
+  "meltdown": {
+    "name": "Radio Meltdown",
+    "description": "Variety indie station.",
+    "url": "http://192.240.102.133:7714/stream"
+  },
+  "electroparty": {
+    "name": "Electro Party",
+    "description": "Electric/dance remixes and tracks.",
+    "url": "http://streaming211.radionomy.com:80/ElectroPartyHits"
+  },
+  "royaltrap": {
+    "name": "Royal Trap",
+    "description": "N/A",
+    "url": "http://193.33.170.218:8000/RoyalTrap"
+  },
+  "fantasy": {
+    "name": "Radio Fantasy",
+    "description": " N/A",
+    "url": "http://stream.radio-fantasy.at:9221/fantasy "
+  },
+  "prysm": {
+    "name": "PRYSM",
+    "description": "N/A",
+    "url": "http://streaming316.radionomy.com:80/prysmradio06-aac"
+  },
+  "nightlight": {
+    "name": "Nightlight",
+    "description": "Nightlight Radio",
+    "url": "http://jiggaradio.com:10080/play/nightlight"
+  }
+}

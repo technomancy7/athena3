@@ -15,9 +15,12 @@ const commands = [
 	new SlashCommandBuilder().setName('kickban').setDescription('Bans a user.').addUserOption(option => option.setName('target').setDescription('Select a person').setRequired(true)),
 	
 	new SlashCommandBuilder().setName('warn').setDescription('Warns a user.')
-	.addUserOption(option => option.setName('target').setDescription('Select a person').setRequired(true))
-	.addStringOption(option => option.setName('reason').setDescription('Add a reason').setRequired(true))
-	
+	.addUserOption(option => option.setName('target').setDescription('Select person').setRequired(true))
+	.addStringOption(option => option.setName('reason').setDescription('Add reason').setRequired(true)),
+
+	new SlashCommandBuilder().setName('addquote').setDescription('Saves a quote.')
+	.addStringOption(option => option.setName('quote').setDescription('Text').setRequired(true))
+	.addStringOption(option => option.setName('person').setDescription('Person').setRequired(true))	
 ].map(command => command.toJSON());
 
 const rest = new REST({ version: '9' }).setToken(token);
