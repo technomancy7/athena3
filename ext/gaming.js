@@ -1,5 +1,6 @@
 const vmsq = require('vmsq');
 const Gamedig = require('gamedig');
+var needle = require('needle');
 
 function cleanupHost(i){
 	i = i.replace("Ã¿", "");
@@ -10,41 +11,6 @@ function cleanupHost(i){
 	return i;
 }
 
-exports.addcustomlist = {
-	help: "Save a server query",
-	aliases: ["cs"],
-	group: "api",
-	execute: async function(ctx){
-		var ls = ctx.cfg.get("custom_servers_"+ctx.guild.id, []);
-		if (!ls.includes(ctx.argsRaw)){
-			ls.push(ctx.argsRaw);
-			ctx.cfg.set("custom_servers_"+ctx.guild.id, ls);
-			ctx.reply(`${ctx.argsRaw} added.`);
-		} else ctx.reply(`${ctx.argsRaw} already exists.`);
-	}
-};
-exports.customlist = {
-	help: "List a server query",
-	aliases: ["lcs"],
-	group: "api",
-	execute: async function(ctx){
-		var ls = ctx.cfg.get("custom_servers_"+ctx.guild.id, []);
-		ctx.reply(`${ls}.`);
-	}
-};
-exports.delcustomlist = {
-	help: "UnSave a server query",
-	aliases: ["ucs"],
-	group: "api",
-	execute: async function(ctx){
-		var ls = ctx.cfg.get("custom_servers_"+ctx.guild.id, []);
-		if (ls.includes(ctx.argsRaw)){
-			ls.cut(ctx.argsRaw);
-			ctx.cfg.set("custom_servers_"+ctx.guild.id, ls);
-			ctx.reply(`${ctx.argsRaw} removed.`);
-		} else ctx.reply(`${ctx.argsRaw} doesnt exist.`);
-	}
-};
 exports.srv = {
 	help: "Show a server query",
 	aliases: ["cservers"],
@@ -79,17 +45,6 @@ exports.srv = {
 				ctx.say(embed);
 			});
 		}
-	}
-};
-
-exports.savealias = {
-	help: "Save a server query",
-	aliases: ["serveralias", "333nalias"],
-	group: "api",
-	execute: async function(ctx){
-		var alias = ctx.argsRaw.split("=")[0];
-		var query = ctx.argsRaw.split("=")[1];
-		ctx.cfg.set("333alias_"+alias, query);
 	}
 };
 

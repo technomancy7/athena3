@@ -1,4 +1,7 @@
 config.json
 **/node_modules/
 **/node_modules/**
+**/logs/**
+**/logs/
 **/audio/*.mp3
+logs/system.log

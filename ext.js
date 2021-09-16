@@ -153,15 +153,19 @@ class ExtManager {
     
             for (const file of commandFiles) {
                 nocache(`./ext/${file}`);
-                const command = require(`./ext/${file}`);
-                for (const c of Object.keys(command)){
-                    command[c].MODULE = file.split(".")[0];
-                    command[c].NAME = c;
-                    this.addCommand(c, command[c]);
-                }
-                if(command.onLoad != undefined) command.onLoad(this);
-                if(command.onRemove != undefined) this.cleanups[file.split(".")[0]] = command.onRemove;
-                this.moduleNames.push(file.split(".")[0]);
+                if(!DISABLED_EXT.includes(file.split(".")[0])){
+                    console.log("Loading "+file);
+                    const command = require(`./ext/${file}`);
+                    for (const c of Object.keys(command)){
+                        command[c].MODULE = file.split(".")[0];
+                        command[c].NAME = c;
+                        this.addCommand(c, command[c]);
+                    }
+                    if(command.onLoad != undefined) command.onLoad(this);
+                    if(command.onRemove != undefined) this.cleanups[file.split(".")[0]] = command.onRemove;
+                    this.moduleNames.push(file.split(".")[0]);
+                } else {console.log("Ignoring "+file);}
+
             }
             
             return commandFiles;

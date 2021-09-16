@@ -236,11 +236,36 @@ global.isObject = function(a) {
     return exports.isObject(a);
 };
 
-exports.getData = function(name){
-    let d = fs.readFileSync(rootDir+"data/"+name+".json");
-    return JSON.parse(d);
+global.EDATA = {};
+
+global.getData = function(name){
+	if(global.EDATA[name] != undefined) return global.EDATA[name];
+	if(!fs.existsSync(rootDir+"data/"+name+".json")) return {}
+    let d = JSON.parse(fs.readFileSync(rootDir+"data/"+name+".json"));
+	global.EDATA[name] = d;
+    return d;
 }
 
-exports.saveData = function(name, data){
-    fs.writeFileSync(rootDir+"data/"+name+".json", JSON.stringify(data, null, 2));
+global.saveData = function(name, data){
+	if(data == undefined && global.EDATA[name] != undefined) data = global.EDATA[name]
+	if(name.includes("/")) {
+		let subdir = name.split("/")[0];
+		if(!fs.existsSync(rootDir+"data/"+subdir+"/")) fs.mkdir(rootDir+"data/"+subdir+"/", (err) => {
+			if (err) return console.error(err);
+			console.log('Directory created successfully!');
+		})
+	}
+    fs.writeFileSync(rootDir+"data/"+name+".json", JSON.stringify(data, null, 2), {flag: "w+"});
+}
+
+global.saveConfig = function(){
+	fs.writeFileSync(rootDir+"config.json", JSON.stringify($cfg, null, 2), {flag: "w+"});
+}
+
+global.setConfig = function(key, value){
+	$cfg[key] = value;
+}
+
+global.touchConfig = function(key, def = null){
+	if($cfg[key] == undefined) return def;
 }

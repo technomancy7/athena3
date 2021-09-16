@@ -3,6 +3,7 @@ const discord = require('discord.js');
 var needle = require('needle');
 const ytdl = require('ytdl-core');
 const fs = require("fs");
+const ffmpeg = require('fluent-ffmpeg');
 const { 
     createAudioPlayer, AudioPlayerStatus, VoiceConnectionStatus, createAudioResource, NoSubscriberBehavior, joinVoiceChannel, StreamType, generateDependencyReport, demuxProbe, getVoiceConnection
 } = require('@discordjs/voice');
@@ -10,6 +11,16 @@ const ytsr = require('ytsr');
 
 let playlist = [];
 let ytcache = {};
+
+
+function ytEmbed(ytf){
+    let em = new discord.MessageEmbed();
+
+    em.addField("Now playing...", ytf.title);
+    em.setThumbnail(ytf.bestThumbnail.url);
+    em.setColor("RANDOM");
+    return em;
+}
 
 function nextResource(){
     return playlist.shift();
@@ -36,7 +47,6 @@ function getPlayer(ctx){
             if(playlist.length > 0){
                 let next = nextResource();
                 ctx.ext.players[ctx.guild.id].play(next.resource);
-                console.log(ytcache[next.id]);
                 if(ytcache[next.id] != undefined) ctx.channel.send({embeds: [ytcache[next.id]]});
             }
 
@@ -45,7 +55,7 @@ function getPlayer(ctx){
     return ctx.ext.players[ctx.guild.id];
 }
 
-async function playSong(ctx, path) {
+async function playSong(ctx, path, customId = null) {
 	const resource = createAudioResource(path, { inputType: StreamType.Arbitrary });
     let player = getPlayer(ctx);
     console.log(player.state.status);
@@ -55,6 +65,7 @@ async function playSong(ctx, path) {
         return true;
     } else {
         let id = path.split("/").pop().split(".")[0];
+        if(customId != null) id = customId;
         playlist.push({resource: resource, id: id});
         ctx.reply("Added to playlist.");
         return false;
@@ -89,16 +100,22 @@ function checkVoiceState(oldState, newState){
     if(newState.channel == null && newState.member != newState.guild.me){
         let cid = oldState.channel.id;
         const chan = newState.guild.channels.cache.get(cid);
-        console.log(realMembers(chan.members))
+
         if(realMembers(chan.members) == 0 ){
             let vc = getVoiceConnection(newState.guild.id);
-            vc.disconnect();
-            vc.destroy();
-            delete extman.players[newState.guild.id];
+            if(vc != undefined){
+                vc.disconnect();
+                vc.destroy();
+                delete extman.players[newState.guild.id];
+            }
+
         }
     }
 
 }
+
+
+
 exports.onRemove = function(ext){
 	ext.client.removeListener('voiceStateUpdate', checkVoiceState);
 }
@@ -106,6 +123,8 @@ exports.onRemove = function(ext){
 exports.onLoad = function(ext) {
 	ext.client.on('voiceStateUpdate', checkVoiceState);
 }
+
+
 
 exports.syncradio = {
     group: "audio",
@@ -131,17 +150,29 @@ exports.syncradio = {
 
     }
 }
+
 exports.radio = {
 	help: "",
  	group: "audio",
 	execute: async function(ctx) {
 		let stations = getData("radio");
         if(stations[ctx.argsRaw] != undefined){
-            console.log(stations[ctx.argsRaw].url);
             const connection = await connectToChannel(ctx);
-            await playSong(ctx, stations[ctx.argsRaw].url);
-            
-            
+            if(connection){
+                let d = await playSong(ctx, stations[ctx.argsRaw].url, customId = stations[ctx.argsRaw].name);
+                let em = new discord.MessageEmbed();
+    
+                em.addField("Now playing...", 
+                `${stations[ctx.argsRaw].name}\n${stations[ctx.argsRaw].description}`);
+                em.setColor("RANDOM");
+                if(d){
+                    await ctx.reply({embeds: [em]});
+                } else{
+                    ytcache[stations[ctx.argsRaw].name] = em;
+                }
+
+            }
+
         }
 
 	}
@@ -181,19 +212,11 @@ exports.stop = {
 
 }
 
-const ffmpeg = require('fluent-ffmpeg');
-function ytEmbed(ytf){
-    let em = new discord.MessageEmbed();
 
-    em.addField("Now playing...", ytf.title);
-    em.setThumbnail(ytf.bestThumbnail.url);
-    em.setColor("RANDOM");
-    return em;
-}
-exports.yt = {
+exports.play = {
 	help: "",
  	group: "audio",
-    aliases: ["play"],
+    aliases: ["yt"],
 	execute: async function(ctx) {
         if(!ctx.argsRaw.startsWith("http")){
             let fm = await ctx.reply("Please wait while I search for that track...");
@@ -206,14 +229,12 @@ exports.yt = {
                             let d = await playSong(ctx, rootDir+'audio/'+item.id+'.mp3');
                             fm.delete();
                             if(d) {
-                                
                                 await ctx.reply({embeds: [ytEmbed(item)]});
                             } else {
                                 ytcache[item.id] = ytEmbed(item);
                             }
                         }  
                     } else {
-                        //await ctx.reply("One moment...");
                         const stream = ytdl(item.url, { filter: 'audioonly' });
                         ffmpeg(stream)
                         .audioBitrate(128)
@@ -231,52 +252,70 @@ exports.yt = {
                             }
                         });
                     }
-
                     return;
                 }
             }
         }else{
-            let id = ctx.argsRaw.split("/").pop().split("=")[1].split("&")[0]
-            if(fs.existsSync(rootDir+'audio/'+id+'.mp3')){
-                console.log("Using local.")
-                const connection = await connectToChannel(ctx);
-                if(connection) {
-                    let info = await ytdl.getBasicInfo(id);
-                    let ytm = {
-                        title: info.videoDetails.title,
-                        bestThumbnail: info.videoDetails.thumbnails[0]
-                    }
-                    let d = await playSong(ctx, rootDir+'audio/'+id+'.mp3');
-                    if(d) {
-                        await ctx.reply({embeds: [ytEmbed(ytm)]});
-                    } else {
-                        ytcache[id] = ytEmbed(ytm);
-                    }
-                }
-            } else {
-                await ctx.reply("One moment...");
+            if(ctx.argsRaw.includes("youtube.com")){
                 let id = ctx.argsRaw.split("/").pop().split("=")[1].split("&")[0]
-                const stream = ytdl(ctx.argsRaw, { filter: 'audioonly' });
-                ffmpeg(stream)
-                .audioBitrate(128)
-                .save(rootDir+'audio/'+id+'.mp3')
-                .on('end', async () => {
+                if(fs.existsSync(rootDir+'audio/'+id+'.mp3')){
                     const connection = await connectToChannel(ctx);
                     if(connection) {
-                        let d = await playSong(ctx, rootDir+'audio/'+id+'.mp3');
-                        let info = await ytdl.getInfo(id);
+                        let info = await ytdl.getBasicInfo(id);
                         let ytm = {
                             title: info.videoDetails.title,
                             bestThumbnail: info.videoDetails.thumbnails[0]
                         }
+                        let d = await playSong(ctx, rootDir+'audio/'+id+'.mp3');
                         if(d) {
                             await ctx.reply({embeds: [ytEmbed(ytm)]});
                         } else {
                             ytcache[id] = ytEmbed(ytm);
                         }
                     }
-                });
+                } else {
+                    await ctx.reply("One moment...");
+                    let id = ctx.argsRaw.split("/").pop().split("=")[1].split("&")[0]
+                    const stream = ytdl(ctx.argsRaw, { filter: 'audioonly' });
+                    ffmpeg(stream)
+                    .audioBitrate(128)
+                    .save(rootDir+'audio/'+id+'.mp3')
+                    .on('end', async () => {
+                        const connection = await connectToChannel(ctx);
+                        if(connection) {
+                            let d = await playSong(ctx, rootDir+'audio/'+id+'.mp3');
+                            let info = await ytdl.getInfo(id);
+                            let ytm = {
+                                title: info.videoDetails.title,
+                                bestThumbnail: info.videoDetails.thumbnails[0]
+                            }
+                            if(d) {
+                                await ctx.reply({embeds: [ytEmbed(ytm)]});
+                            } else {
+                                ytcache[id] = ytEmbed(ytm);
+                            }
+                        }
+                    });
+                }
+            } else{
+                const connection = await connectToChannel(ctx);
+                if(connection) {
+                    let d = await playSong(ctx, ctx.argsRaw, customId=ctx.argsRaw);
+                    let em = new discord.MessageEmbed();
+
+                    em.addField("Now playing...", ctx.argsRaw);
+                    em.setColor("RANDOM");
+                    
+                    if(d) {
+                        await ctx.reply({embeds: [em]});
+                    } else {
+                        ytcache[ctx.argsRaw] = em;
+                    }
+
+                }
+
             }
+            
 
         }
 

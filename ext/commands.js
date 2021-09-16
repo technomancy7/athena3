@@ -8,10 +8,11 @@ const luaEnv = luaState.createEnv();
 var moment = require('moment');
 const checks = require('../checks.js');
 const { createCanvas, loadImage } = require('canvas')
+const { executeDatacube } = require("../dc.js");
 
 async function convertImage(path, toType = "jpeg", cb){
     loadImage(path).then((img) => {
-        const canvas = createCanvas(img.height, img.width)
+        const canvas = createCanvas(img.width, img.height)
         const ctx = canvas.getContext('2d')
         ctx.drawImage(img, 0, 0);
         let paths = path.split("/")
@@ -25,7 +26,7 @@ async function convertImage(path, toType = "jpeg", cb){
 			outf = outf+".png"
             stream = canvas.createPNGStream()
         }
-		out = fs.createWriteStream(rootDir+'/img/'+outf)
+		out = fs.createWriteStream(rootDir+'factory/'+outf)
         stream.pipe(out)
         out.on('finish', () =>  console.log(`The ${toType} file was created.`))
 		if(cb != undefined){
@@ -131,6 +132,32 @@ exports.run = {
 	}
 };
 
+exports.dc = {
+	help: "Datacube execute.",
+	group: "admin",
+	flags: ['$hidden'],
+	execute: async function(ctx) {
+		//TODO make it so purging is optional
+		if (!checks.isWhitelisted(ctx)){ctx.channel.send("Access denied.");return;}
+		executeDatacube("https://gitlab.com/technomancer7/datascripts/-/raw/main/"+ctx.argsRaw+".dc3?inline=false", async (ex) => {
+			ex.set("discord", ctx.client);
+			ex.set("discord.ext", ctx.ext);
+			ex.set("config", ctx.cfg);
+			await ex.compile();
+			if(ex.values.purge == "yes"){
+				ex.channel().messages.fetch({ limit: 100 }).then(messages => {
+					messages.forEach(message => message.delete())
+				})
+				.catch((err) => ctx.reply(`ERROR: ${err}`))
+			}
+
+			await ex.parse();
+		});
+		
+	}
+};
+
+
 exports.echo = {
 	help: "I repeat, echo.",
 	group: "admin",
@@ -160,15 +187,15 @@ exports.set = {
 				group = ctx.guild.id;
 			}
 			key = key.split(".")[1];
-			let nv = ctx.cfg[group];
+			let nv = $cfg[group];
 			if(nv == undefined) nv = {};
 			nv[key] = value;
-			ctx.cfg[group] = nv;
-			fs.writeFileSync(ctx.cfg.rootDir+"config.json", JSON.stringify(ctx.cfg, null, 2));
+			$cfg[group] = nv;
+			fs.writeFileSync($cfg.rootDir+"config.json", JSON.stringify($cfg, null, 2), {flag: "w+"});
 			ctx.channel.send(`Setting **${group} -> ${key}** to **${value}** (${typeof(value)}).`);
 		} else {
-			ctx.cfg[key] = value;
-			fs.writeFileSync(ctx.cfg.rootDir+"config.json", JSON.stringify(ctx.cfg, null, 2));
+			$cfg[key] = value;
+			fs.writeFileSync($cfg.rootDir+"config.json", JSON.stringify($cfg, null, 2), {flag: "w+"});
 			ctx.channel.send(`Setting **${key}** to **${value}** (${typeof(value)}).`);
 		}
 		
@@ -186,7 +213,7 @@ exports.get = {
 	execute: async function(ctx) {
 		let args = ctx.args;
 		if (!checks.isOwner(ctx)){return;}
-		ctx.reply(ctx.cfg[args.join (" ")]);
+		ctx.reply($cfg[args.join (" ")]);
 	}
 };
 
@@ -197,8 +224,9 @@ exports.whitelist = {
 	usage: "[member]",
 	execute: async function(ctx) {
 		let args = ctx.args;
-		var ls = ctx.cfg.get('whitelist', []);
-		
+		var ls = $cfg["whitelist"];
+		if(ls == undefined) ls = [];
+
 		if (args.length == 0){
 			if (ls.length > 0){ ctx.channel.send(ls.join(", "));return; }else{ctx.channel.send("None.");return;}
 		}
@@ -215,7 +243,8 @@ exports.whitelist = {
 		}else{
 			ls.push(m.id);
 			console.log(ls);
-			ctx.cfg.set('whitelist', ls);
+			//ctx.cfg.set('whitelist', ls);
+			setConfig("whitelist", ls);
 			ctx.channel.send(`Whitelisted ${m}.`);
 		}
 	}
@@ -238,6 +267,7 @@ exports.unload = {
 		}
 	}
 };
+
 exports.reload = {
 	help: "Reloads extensions",
 	group: "admin",
@@ -270,6 +300,38 @@ exports.sreload = {
 		}else{
 			const out = ctx.commands.reload_slash(args[0]);
 			ctx.channel.send(`Slash commands ${args[0]} reloaded (${out}).`);
+		}
+	}
+};
+
+exports.eignore = {
+	help: "Sets ignored extensions",
+	group: "admin",
+	flags: ['$owner'],
+	usage: "[module]",
+	execute: async function(ctx) {
+		let args = ctx.args;
+		if (!checks.isOwner(ctx)){return;}
+		if (args.length != 0){
+			for(let mn of args){
+				let namespace = "global";
+				let mod = mn;
+				if(mn.includes(".")){
+					namespace = mn.split(".")[0];
+					mod = mn.split(".")[1]
+				}
+				if($cfg.disabled_extensions[namespace] == undefined) 
+					$cfg.disabled_extensions[namespace] = [];
+
+				if($cfg.disabled_extensions[namespace].includes(mod)){
+					$cfg.disabled_extensions[namespace].cut(mod);
+					ctx.reply(`Module ${mod} enabled in ${namespace} namespace.`);
+				} else {
+					$cfg.disabled_extensions[namespace].push(mod);
+					ctx.reply(`Module ${mod} disabled in ${namespace} namespace.`);
+				}
+				saveConfig();
+			}
 		}
 	}
 };
