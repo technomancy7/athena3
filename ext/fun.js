@@ -4,6 +4,7 @@ var common = require("../common.js");
 const discord = require('discord.js');
 var emoji = require('node-emoji');
 const https = require('https');
+let cards = require("../cards.js");
 
 let facts = [
 	{
@@ -403,6 +404,57 @@ let facts = [
 		"wav": "https://i1.theportalwiki.net/img/9/9f/Fact_core_attachedfact34.wav",
 	},
 ]
+
+async function blackjackHandler(msg){
+	let checkVictory = function(state){
+		if(state.player.value() == 21){
+			return 1
+		}
+	}
+	let commands = ["hit", "stand", "quit"]
+	if($blackjack[msg.author.id] != undefined && commands.includes(msg.content)){
+		let state = $blackjack[msg.author.id]
+		if(msg.content == "hit"){
+			state.player.cards.push(state.deck.draw());
+			if(checkVictory(state) == 0){
+				msg.reply(`You have ${state.player.toString()}. (Value:${state.player.value()})\nSay: HIT, STAND, QUIT`);
+			}
+			
+		} else if(msg.content == "stand"){
+		} else if(msg.content == "quit"){	
+			msg.reply("Game over.");
+			delete $blackjack[msg.author.id];
+		} else {
+
+		}
+	}
+}
+
+exports.onRemove = function(ext){
+	ext.client.removeListener('messageCreate', blackjackHandler);
+}
+
+exports.onLoad = function(ext) {
+	ext.client.on('messageCreate', blackjackHandler);
+}
+
+global.$blackjack = {};
+
+exports.blackjack = {
+	help: "",
+ 	group: "fun",
+	execute: async function(ctx) {
+		let deck = new cards.StandardCards();
+		deck.shuffle();
+		let player = deck.createHandFrom(2);
+		let house = deck.createHandFrom(2);
+
+		ctx.reply(`You have ${player.toString()}. (Value: ${player.value()})\nSay: HIT, STAND, QUIT`);
+		$blackjack[ctx.author.id] = {player: player, house: house, deck: deck}		
+
+		
+	}
+};
 
 exports.factcore = {
 	help: "",

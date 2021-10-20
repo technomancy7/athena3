@@ -237,10 +237,33 @@ global.isObject = function(a) {
 };
 
 global.EDATA = {};
+global.checkDataSub = function(path){
+	if(path.includes("/")) {
+		let subdir = path.split("/")[0];
+		if(!fs.existsSync(rootDir+"data/"+subdir+"/")) fs.mkdir(rootDir+"data/"+subdir+"/", (err) => {
+			if (err) return console.error(err);
+			console.log('Directory created successfully!');
+		})
+	}
+}
+global.getDataVar = function(name, varname, def = undefined){
+	if(global.EDATA[name] == undefined) global.getData(name);
+	if(global.EDATA[name][varname] == undefined) return def;
+	return global.EDATA[name][varname];
+}
+
+global.setDataVar = function(name, varname, newv){
+	if(global.EDATA[name] == undefined) global.getData(name);
+	global.EDATA[name][varname] = newv;
+}
 
 global.getData = function(name){
 	if(global.EDATA[name] != undefined) return global.EDATA[name];
-	if(!fs.existsSync(rootDir+"data/"+name+".json")) return {}
+	global.checkDataSub(name);
+	if(!fs.existsSync(rootDir+"data/"+name+".json")) {
+		global.EDATA[name] = {};
+		return {}
+	}
     let d = JSON.parse(fs.readFileSync(rootDir+"data/"+name+".json"));
 	global.EDATA[name] = d;
     return d;
@@ -248,13 +271,7 @@ global.getData = function(name){
 
 global.saveData = function(name, data){
 	if(data == undefined && global.EDATA[name] != undefined) data = global.EDATA[name]
-	if(name.includes("/")) {
-		let subdir = name.split("/")[0];
-		if(!fs.existsSync(rootDir+"data/"+subdir+"/")) fs.mkdir(rootDir+"data/"+subdir+"/", (err) => {
-			if (err) return console.error(err);
-			console.log('Directory created successfully!');
-		})
-	}
+	global.checkDataSub(name);
     fs.writeFileSync(rootDir+"data/"+name+".json", JSON.stringify(data, null, 2), {flag: "w+"});
 }
 

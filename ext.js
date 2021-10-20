@@ -38,6 +38,10 @@ class ExtManager {
         if (prefix == undefined){this.prefix = ".";}else{this.prefix = prefix;}
     };
 
+    execute_cmd(name, ln) {
+
+    }
+    
     process_commands(client, cfg, msg){
         if (msg.content.startsWith(this.prefix)){
             var cmd = msg.content.replace(this.prefix, "");

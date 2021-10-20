@@ -50,7 +50,17 @@ function checkDirectorySanity(){
     if(!fs.existsSync( rootDir+"threads/" )) fs.mkdir(rootDir+"threads/", dn);
 }
 checkDirectorySanity();
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES] });
+const client = new Client({ intents: [
+        Intents.FLAGS.GUILD_MEMBERS, 
+        Intents.FLAGS.GUILDS, 
+        Intents.FLAGS.GUILD_MESSAGES, 
+        Intents.FLAGS.GUILD_VOICE_STATES, 
+        Intents.FLAGS.GUILD_PRESENCES,
+        Intents.FLAGS.DIRECT_MESSAGES,
+        Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
+        Intents.FLAGS.DIRECT_MESSAGE_TYPING
+    ] 
+});
 var com = new ext.ExtManager(client, prefix);
 global.extman = com;
 

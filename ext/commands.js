@@ -63,16 +63,68 @@ async function handleUserJoin(member){
 		await chan.send(em);
 	}
 }
+global.mutSaveTime = 30;
+async function checkMutes(ctx){
+	let count = 0;
+	//console.log("Checking mutes");
+    let data = getData("mute");
+	for (let info of Object.keys(data)){
+		let muted = data[info];
+		if(muted.time != "∞"){
+			count++;
+			muted.time--;
+
+			if(muted.time <= 0){
+				let guild = ctx.client.guilds.cache.get(muted.guild);
+				
+				let members = await guild.members.fetch();
+				let channels = await guild.channels.fetch()
+				let member = members.get(muted.member);
+				let channel = channels.get(muted.channel);
+				if(member != null){
+					let muted_role = guild.roles.cache.find(role => role.name === 'Muted')
+
+					member.roles.remove(muted_role);
+					if(channel != undefined) await channel.send(`${member} was unmuted.`);
+					delete data[info];
+					global.mutSaveTime = 0;
+				}
+
+			}
+		}
+		
+	}
+
+	if(count > 0) global.mutSaveTime--;
+	if(global.mutSaveTime <= 0){
+		saveData("mute");
+		global.mutSaveTime = 30;
+	}
+}
 
 exports.onRemove = function(ext){
 	ext.client.removeListener('messageCreate', handleMsgAttachments);
 	ext.client.removeListener('guildMemberAdd', handleUserJoin);
+	clearInterval(global.muteDelays);
 }
 
 exports.onLoad = function(ext) {
 	ext.client.on('messageCreate', handleMsgAttachments);
 	ext.client.on('guildMemberAdd', handleUserJoin);
+	checkMutes(ext);
+	global.muteDelays = setInterval(checkMutes, 1000, ext);
 }
+
+exports.testyyy = {
+	help: "",
+	group: "utility",
+	usage: "[fn]",
+	execute: async function(ctx){
+		let members = await ctx.guild.members.fetch();
+		let member = members.get("360013224776695808");
+		console.log(member);
+	}
+};
 
 exports.inspect = {
 	help: "Views source code of a JS object.",
